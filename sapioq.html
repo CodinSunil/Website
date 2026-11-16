@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智性戀傾向心理測驗 | Sapiosexuality Assessment</title>
+  <!-- 載入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 載入 Google Fonts: Noto Sans TC & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', '"Noto Sans TC"', 'sans-serif'],
+          },
+          colors: {
+            ivory: '#FAF9F6',
+            slateDeep: '#1E293B',
+            indigoAccent: '#4F46E5',
+            plumAccent: '#7C3AED',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #FAF9F6;
+      color: #1E293B;
+      scroll-behavior: smooth;
+    }
+    /* 自訂按鈕選取與微互動效果 */
+    .likert-btn {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .likert-btn:active {
+      transform: scale(0.95);
+    }
+    .card-enter {
+      animation: fadeSlideUp 0.45s ease-out forwards;
+    }
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-900">
+
+  <!-- 頂部黏性進度條 (Sticky Progress Bar) -->
+  <header class="sticky top-0 z-40 bg-[#FAF9F6]/90 backdrop-blur-md border-b border-slate-200/80 transition-all">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 py-3">
+      <div class="flex items-center justify-between text-xs sm:text-sm font-medium text-slate-600 mb-1.5">
+        <span class="flex items-center gap-1.5">
+          <span class="inline-block w-2 h-2 rounded-full bg-indigo-600"></span>
+          智性戀傾向測驗（SapioQ）
+        </span>
+        <span id="progress-text" class="font-semibold text-indigo-600">0 / 12 題 (0%)</span>
+      </div>
+      <!-- 進度條軌道 -->
+      <div class="w-full h-2 bg-slate-200/80 rounded-full overflow-hidden">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主要內容區 -->
+  <main class="flex-grow max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12">
+    
+    <!-- 測驗引言區 -->
+    <section class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200/70 mb-8">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold tracking-wide mb-4">
+        <span>心理學實證量表改編</span>
+        <span>•</span>
+        <span>約需 2 分鐘</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-3">
+        大腦對你來說，是最性感的器官嗎？
+      </h1>
+      <p class="text-slate-600 text-sm sm:text-base leading-relaxed mb-4">
+        本測驗參考西澳大學心理學家 <strong>Gilles Gignac 等人（2018）</strong>發表於《<em>Intelligence</em>》期刊的《智性戀量表》（SapioQ）設計改編。測驗將從<strong>「思想共鳴度」</strong>與<strong>「大腦性感度」</strong>兩個心理維度，評估一個人的智力與思維深度在多大程度上能成為你的心動開關。
+      </p>
+      <div class="bg-slate-50 rounded-xl p-3.5 text-xs sm:text-sm text-slate-500 flex items-start gap-2.5 border border-slate-100">
+        <svg class="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>請根據你過往在感情、曖昧或欣賞對象時的<strong>真實直覺</strong>作答，而非你「希望自己成為」的樣子。</span>
+      </div>
+    </section>
+
+    <!-- 題目列表容器 -->
+    <form id="quiz-form" class="space-y-5" onsubmit="return false;">
+      <div id="questions-container" class="space-y-5">
+        <!-- 題目將由 JavaScript 動態渲染 -->
+      </div>
+
+      <!-- 提交按鈕區 -->
+      <div class="pt-6 pb-4 flex flex-col items-center">
+        <button 
+          type="button" 
+          id="submit-btn"
+          onclick="handleSubmit()"
+          class="w-full sm:w-auto min-w-[240px] px-8 py-4 rounded-xl font-semibold text-base text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <span id="submit-btn-text">請先完成所有題目（剩餘 12 題）</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </button>
+        <p id="helper-hint" class="text-xs text-slate-400 mt-2.5 text-center">
+          點擊未完成提示可自動捲動至漏填題目
+        </p>
+      </div>
+    </form>
+
+    <!-- 測驗結果儀表板 (預設隱藏) -->
+    <section id="result-section" class="hidden mt-8 card-enter">
+      <div class="bg-white rounded-3xl p-6 sm:p-10 shadow-lg border border-indigo-100 relative overflow-hidden">
+        <!-- 裝飾背景光暈 -->
+        <div class="absolute -top-24 -right-24 w-64 h-64 bg-indigo-50 rounded-full blur-3xl opacity-70 pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-violet-50 rounded-full blur-3xl opacity-70 pointer-events-none"></div>
+
+        <div class="relative z-10">
+          <!-- 結果頂部標籤 -->
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
+            <span class="px-3.5 py-1 rounded-full bg-indigo-600 text-white text-xs font-semibold tracking-wider uppercase">
+              測驗分析報告
+            </span>
+            <span class="text-xs text-slate-400 font-medium">
+              基於 SapioQ 雙維度模型
+            </span>
+          </div>
+
+          <!-- 分數與類型標題 -->
+          <div class="mb-6">
+            <p class="text-sm font-medium text-slate-500 mb-1">你的智性戀光譜定位</p>
+            <h2 id="result-tier-title" class="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
+              <!-- 動態填入類型標題 -->
+            </h2>
+
+            <!-- 總分與均分卡片 -->
+            <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+              <div class="bg-slate-50/90 rounded-2xl p-4 border border-slate-100">
+                <div class="text-xs text-slate-500 mb-1">智性戀平均指數</div>
+                <div class="flex items-baseline gap-1">
+                  <span id="result-avg-score" class="text-3xl sm:text-4xl font-bold text-indigo-600">0.0</span>
+                  <span class="text-sm text-slate-400 font-medium">/ 5.0</span>
+                </div>
+              </div>
+              <div class="bg-slate-50/90 rounded-2xl p-4 border border-slate-100">
+                <div class="text-xs text-slate-500 mb-1">量表總積分</div>
+                <div class="flex items-baseline gap-1">
+                  <span id="result-total-score" class="text-3xl sm:text-4xl font-bold text-violet-600">0</span>
+                  <span class="text-sm text-slate-400 font-medium">/ 60 分</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 心理學解析內文 -->
+            <div class="bg-indigo-50/50 rounded-2xl p-5 border border-indigo-100/80 mb-8">
+              <h3 class="text-sm font-bold text-indigo-950 mb-2 flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+                心理解析與擇偶特徵
+              </h3>
+              <p id="result-description" class="text-slate-700 text-sm sm:text-base leading-relaxed">
+                <!-- 動態填入解析文字 -->
+              </p>
+            </div>
+          </div>
+
+          <!-- 雙維度細分對比 (Romantic vs Sexual) -->
+          <div class="space-y-5 mb-8">
+            <h3 class="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2">
+              雙維度吸引力結構分析
+            </h3>
+
+            <!-- 維度一：思想共鳴度 (Romantic Resonance) -->
+            <div>
+              <div class="flex justify-between items-end mb-1.5">
+                <div>
+                  <span class="text-sm font-semibold text-slate-800">思想共鳴度（Romantic Resonance）</span>
+                  <p class="text-xs text-slate-500">對深度對話、求知慾、才華與靈魂契合的浪漫依賴（7 題平均）</p>
+                </div>
+                <span id="romantic-score-text" class="text-base font-bold text-indigo-600">0.0 / 5.0</span>
+              </div>
+              <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                <div id="romantic-bar" class="h-full bg-indigo-500 rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- 維度二：大腦性感度 (Sexual Attraction to Intellect) -->
+            <div>
+              <div class="flex justify-between items-end mb-1.5">
+                <div>
+                  <span class="text-sm font-semibold text-slate-800">大腦性感度（Sexual Attraction）</span>
+                  <p class="text-xs text-slate-500">對敏銳洞察、機鋒辯論與高智商所產生的生理與費洛蒙衝動（5 題平均）</p>
+                </div>
+                <span id="sexual-score-text" class="text-base font-bold text-violet-600">0.0 / 5.0</span>
+              </div>
+              <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                <div id="sexual-bar" class="h-full bg-violet-500 rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 學術註解 -->
+          <div class="text-xs text-slate-400 leading-relaxed mb-8 bg-slate-50 p-3.5 rounded-xl">
+            <strong>研究背景註記：</strong>在 Gignac 等人（2018）的原始研究中，智性戀指數平均達 4.0 分以上者約佔受試者總數的 8%。值得注意的是，研究亦發現現實中的智性吸引存在「閾值效應」——最能引發心動的往往不是客觀智商最高的人，而是主觀上「與自己思維頻率相近、又能帶來啟發」的對象。
+          </div>
+
+          <!-- 操作按鈕群：複製分享 & 重新測驗 -->
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button 
+              type="button" 
+              onclick="copyResultToClipboard()"
+              class="flex-1 py-3.5 px-6 rounded-xl font-semibold text-sm sm:text-base text-white bg-slate-900 hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+              </svg>
+              <span>複製測驗結果分享</span>
+            </button>
+
+            <button 
+              type="button" 
+              onclick="resetQuiz()"
+              class="py-3.5 px-6 rounded-xl font-semibold text-sm sm:text-base text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              <span>重新測驗</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 頁尾 -->
+  <footer class="max-w-3xl mx-auto px-4 py-6 text-center text-xs text-slate-400">
+    Adapted from Gignac, G. E., Darbyshire, J., & Ooi, M. (2018). <em>Some people are attracted sexually to intelligence: A psychometric evaluation of sapiosexuality.</em> Intelligence.
+  </footer>
+
+  <!-- Toast 提示訊息框 (取代 alert) -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-5 py-3 rounded-full text-sm font-medium shadow-xl flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300 translate-y-3">
+    <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+    </svg>
+    <span id="toast-message">已複製測驗結果到剪貼簿！</span>
+  </div>
+
+  <script>
+    // 1. 測驗題庫資料 (12題，區分 romantic 與 sexual 兩個維度)
+    const QUESTIONS = [
+      {
+        id: 1,
+        text: "聆聽某人針對複雜議題發表極具邏輯與深度的見解，會讓我產生強烈的吸引力。",
+        dimension: "romantic"
+      },
+      {
+        id: 2,
+        text: "一個人在專業領域展現出極致的敏銳度與洞察力，對我來說非常性感。",
+        dimension: "sexual"
+      },
+      {
+        id: 3,
+        text: "相比於外貌或身材，對方在對話中展現的幽默機鋒與反應速度更能挑起我的興趣。",
+        dimension: "sexual"
+      },
+      {
+        id: 4,
+        text: "如果一個人的談吐缺乏深度或邏輯混亂，就算長得再好看，我也很難對他產生浪漫感覺。",
+        dimension: "romantic"
+      },
+      {
+        id: 5,
+        text: "與聰明人進行高強度的思想交鋒或辯論，會讓我感受到類似調情的興奮感。",
+        dimension: "sexual"
+      },
+      {
+        id: 6,
+        text: "在挑選伴侶時，對方的求知慾與思想獨立性是我最看重的核心條件。",
+        dimension: "romantic"
+      },
+      {
+        id: 7,
+        text: "看到某人輕鬆拆解一個我原本想不通的難題，會讓我瞬間對他產生好感。",
+        dimension: "romantic"
+      },
+      {
+        id: 8,
+        text: "智商高、思維敏捷的人，在親密關係中對我具有一種難以抗拒的費洛蒙。",
+        dimension: "sexual"
+      },
+      {
+        id: 9,
+        text: "我很容易因為某人在文字、音樂或創作中流露出的才華與巧思而心動。",
+        dimension: "romantic"
+      },
+      {
+        id: 10,
+        text: "比起單純的甜言蜜語，能接住我深層想法並給予精準回饋的人更讓我著迷。",
+        dimension: "romantic"
+      },
+      {
+        id: 11,
+        text: "在社交場合中，我最容易被那個言之有物、見解獨到的人吸引目光。",
+        dimension: "romantic"
+      },
+      {
+        id: 12,
+        text: "對我而言，大腦的性感程度遠勝過外在的物質條件或社會頭銜。",
+        dimension: "sexual"
+      }
+    ];
+
+    // 量表選項定義
+    const SCALE_OPTIONS = [
+      { value: 1, label: "非常不同意" },
+      { value: 2, label: "不同意" },
+      { value: 3, label: "普通" },
+      { value: 4, label: "同意" },
+      { value: 5, label: "非常同意" }
+    ];
+
+    // 儲存使用者作答狀態 { [questionId]: score }
+    let answers = {};
+    // 儲存最新測驗結果文字以供複製分享
+    let latestShareText = "";
+
+    // 2. 初始化渲染所有題目卡片
+    function renderQuestions() {
+      const container = document.getElementById("questions-container");
+      container.innerHTML = "";
+
+      QUESTIONS.forEach((q, index) => {
+        const card = document.createElement("div");
+        card.id = `question-card-${q.id}`;
+        card.className = "bg-white rounded-2xl p-5 sm:p-7 shadow-sm border border-slate-200/70 transition-all duration-200";
+
+        // 題號與題目文字
+        const headerHtml = `
+          <div class="flex items-start gap-3 mb-5">
+            <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold shrink-0 mt-0.5">
+              ${String(index + 1).padStart(2, '0')}
+            </span>
+            <p class="text-slate-800 font-medium text-base sm:text-lg leading-snug">
+              ${q.text}
+            </p>
+          </div>
+        `;
+
+        // 1-5 分選項按鈕群 (兼顧桌機橫向與手機觸控易用性)
+        const optionsHtml = `
+          <div class="grid grid-cols-5 gap-2 sm:gap-3" role="radiogroup" aria-label="第 ${index + 1} 題評分">
+            ${SCALE_OPTIONS.map(opt => `
+              <button
+                type="button"
+                id="q-${q.id}-opt-${opt.value}"
+                onclick="selectOption(${q.id}, ${opt.value})"
+                class="likert-btn flex flex-col items-center justify-center py-3 px-1 sm:px-2 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-indigo-50/60 hover:border-indigo-300 text-slate-600 cursor-pointer focus:outline-none"
+              >
+                <span class="text-base sm:text-lg font-bold mb-0.5">${opt.value}</span>
+                <span class="text-[11px] sm:text-xs font-medium text-center leading-tight opacity-85">${opt.label}</span>
+              </button>
+            `).join("")}
+          </div>
+        `;
+
+        card.innerHTML = headerHtml + optionsHtml;
+        container.appendChild(card);
+      });
+    }
+
+    // 3. 處理選項點擊事件
+    function selectOption(questionId, value) {
+      answers[questionId] = value;
+
+      // 更新該題按鈕的視覺狀態
+      SCALE_OPTIONS.forEach(opt => {
+        const btn = document.getElementById(`q-${questionId}-opt-${opt.value}`);
+        if (opt.value === value) {
+          btn.className = "likert-btn flex flex-col items-center justify-center py-3 px-1 sm:px-2 rounded-xl border-2 border-indigo-600 bg-indigo-600 text-white shadow-sm cursor-pointer focus:outline-none";
+        } else {
+          btn.className = "likert-btn flex flex-col items-center justify-center py-3 px-1 sm:px-2 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-indigo-50/60 hover:border-indigo-300 text-slate-600 cursor-pointer focus:outline-none";
+        }
+      });
+
+      // 移除可能存在的未作答紅框提示
+      const card = document.getElementById(`question-card-${questionId}`);
+      card.classList.remove("ring-2", "ring-rose-400", "border-rose-300");
+
+      updateProgress();
+    }
+
+    // 4. 更新頂部進度條與按鈕文字
+    function updateProgress() {
+      const answeredCount = Object.keys(answers).length;
+      const total = QUESTIONS.length;
+      const percentage = Math.round((answeredCount / total) * 100);
+
+      document.getElementById("progress-text").textContent = `${answeredCount} / ${total} 題 (${percentage}%)`;
+      document.getElementById("progress-bar").style.width = `${percentage}%`;
+
+      const submitBtn = document.getElementById("submit-btn");
+      const submitBtnText = document.getElementById("submit-btn-text");
+      const helperHint = document.getElementById("helper-hint");
+
+      if (answeredCount === total) {
+        submitBtnText.textContent = "查看測驗結果";
+        submitBtn.classList.remove("opacity-90");
+        helperHint.textContent = "所有題目已完成，點擊查看你的雙維度分析報告";
+      } else {
+        const remaining = total - answeredCount;
+        submitBtnText.textContent = `請先完成所有題目（剩餘 ${remaining} 題）`;
+        helperHint.textContent = "點擊按鈕可自動跳轉至尚未填寫的題目";
+      }
+    }
+
+    // 5. 提交測驗與計算分數
+    function handleSubmit() {
+      const answeredCount = Object.keys(answers).length;
+      
+      // 若尚未全部作答，找出第一題漏填並平滑捲動過去
+      if (answeredCount < QUESTIONS.length) {
+        const firstUnanswered = QUESTIONS.find(q => !answers[q.id]);
+        if (firstUnanswered) {
+          const targetCard = document.getElementById(`question-card-${firstUnanswered.id}`);
+          targetCard.classList.add("ring-2", "ring-rose-400", "border-rose-300");
+          
+          // 計算扣除 sticky header 高度後的捲動位置
+          const headerOffset = 80;
+          const elementPosition = targetCard.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth"
+          });
+
+          showToast(`還有第 ${firstUnanswered.id} 題尚未作答喔！`);
+        }
+        return;
+      }
+
+      // 計算總分、均分與雙維度分數
+      let totalScore = 0;
+      let romanticSum = 0;
+      let romanticCount = 0;
+      let sexualSum = 0;
+      let sexualCount = 0;
+
+      QUESTIONS.forEach(q => {
+        const val = answers[q.id];
+        totalScore += val;
+        if (q.dimension === "romantic") {
+          romanticSum += val;
+          romanticCount++;
+        } else if (q.dimension === "sexual") {
+          sexualSum += val;
+          sexualCount++;
+        }
+      });
+
+      const avgScore = (totalScore / QUESTIONS.length).toFixed(1);
+      const romanticAvg = (romanticSum / romanticCount).toFixed(1);
+      const sexualAvg = (sexualSum / sexualCount).toFixed(1);
+
+      // 判定類型與心理學解析
+      const numericAvg = parseFloat(avgScore);
+      let tierTitle = "";
+      let tierDesc = "";
+
+      if (numericAvg <= 2.4) {
+        tierTitle = "感官與情感導向型";
+        tierDesc = "在你的親密關係藍圖中，聰明才智雖然是一個不錯的加分項，但並不是點燃心動的核心開關。相比於抽象的邏輯辯論或高深思想，你更重視相處時的溫暖陪伴、情緒價值、外貌吸引力或日常生活步調的契合。對你而言，穩定而真實的情感流動遠比智力交鋒來得動人。";
+      } else if (numericAvg <= 3.3) {
+        tierTitle = "均衡欣賞型";
+        tierDesc = "你欣賞有內涵、談吐得體且具備才華的人，但智力與其他伴侶特質（如性格溫柔、外型順眼、價值觀相近）在你的擇偶天平上基本上平分秋色。你不會因為一個人極度聰明就忽略他在相處上的缺點，同時也難以接受完全無法溝通的對象，屬於相當務實且平衡的伴侶選擇策略。";
+      } else if (numericAvg <= 3.9) {
+        tierTitle = "高度智性偏好型";
+        tierDesc = "你對思維深度與精神交流有著非常明顯的偏愛。外在條件或許能吸引你的第一眼目光，但真正能讓你產生依戀、決定長期投入的，必定是對方大腦裡的風景。如果一段關係缺乏靈魂共鳴或深度對話，你很快就會感到索然無味；能接住你想法、並帶給你新視角的人對你具有極強的吸引力。";
+      } else {
+        tierTitle = "典型高濃度智性戀（Top ~8% 族群）";
+        tierDesc = "對你而言，大腦就是最性感的器官。高強度的思想交鋒、精準犀利的洞察力，以及在專業或創作領域展現出的極致才華，能直接觸發你的浪漫甚至生理心動。你很難對缺乏邏輯或思想淺薄的人產生情慾，唯有在智力旗鼓相當、甚至能讓你產生「心智仰望感」的對象面前，你才會真正感受到被徹底點燃。";
+      }
+
+      // 更新結果畫面 DOM
+      document.getElementById("result-tier-title").textContent = tierTitle;
+      document.getElementById("result-avg-score").textContent = avgScore;
+      document.getElementById("result-total-score").textContent = totalScore;
+      document.getElementById("result-description").textContent = tierDesc;
+
+      document.getElementById("romantic-score-text").textContent = `${romanticAvg} / 5.0`;
+      document.getElementById("sexual-score-text").textContent = `${sexualAvg} / 5.0`;
+
+      // 準備分享文案
+      latestShareText = `【智性戀傾向心理測驗 (SapioQ)】\n我的測驗結果是：${tierTitle}\n📊 智性戀平均指數：${avgScore} / 5.0（總分 ${totalScore}/60）\n💭 思想共鳴度：${romanticAvg} / 5.0\n⚡ 大腦性感度：${sexualAvg} / 5.0\n\n大腦對你來說是最性感的器官嗎？來測測看你的智性戀濃度！`;
+
+      // 顯示結果區塊並平滑捲動
+      const resultSection = document.getElementById("result-section");
+      resultSection.classList.remove("hidden");
+
+      // 延遲一點觸發進度條動畫以確保 CSS transition 生效
+      setTimeout(() => {
+        document.getElementById("romantic-bar").style.width = `${(parseFloat(romanticAvg) / 5) * 100}%`;
+        document.getElementById("sexual-bar").style.width = `${(parseFloat(sexualAvg) / 5) * 100}%`;
+      }, 100);
+
+      setTimeout(() => {
+        const headerOffset = 72;
+        const elementPosition = resultSection.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth"
+        });
+      }, 150);
+    }
+
+    // 6. 複製結果到剪貼簿 (相容 iframe 與各種瀏覽器環境)
+    function copyResultToClipboard() {
+      if (!latestShareText) return;
+
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = latestShareText;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand("copy");
+        document.body.removeChild(textArea);
+
+        if (successful) {
+          showToast("已複製測驗結果！可直接貼上分享給朋友");
+        } else {
+          showToast("複製失敗，請手動選取文字複製");
+        }
+      } catch (err) {
+        showToast("無法自動複製，請手動選取結果文字");
+      }
+    }
+
+    // 7. 重新測驗
+    function resetQuiz() {
+      answers = {};
+      latestShareText = "";
+      
+      // 隱藏結果區並重置維度進度條
+      const resultSection = document.getElementById("result-section");
+      resultSection.classList.add("hidden");
+      document.getElementById("romantic-bar").style.width = "0%";
+      document.getElementById("sexual-bar").style.width = "0%";
+
+      // 重新渲染題目與進度條
+      renderQuestions();
+      updateProgress();
+
+      // 捲動回頁面頂部
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+      showToast("測驗已重置，可以重新作答");
+    }
+
+    // 8. 顯示底部 Toast 提示訊息
+    let toastTimeout;
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      const toastMsg = document.getElementById("toast-message");
+      toastMsg.textContent = message;
+
+      toast.classList.remove("opacity-0", "translate-y-3", "pointer-events-none");
+      toast.classList.add("opacity-100", "translate-y-0");
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove("opacity-100", "translate-y-0");
+        toast.classList.add("opacity-0", "translate-y-3", "pointer-events-none");
+      }, 2800);
+    }
+
+    // 頁面載入完成後初始化
+    window.addEventListener("DOMContentLoaded", () => {
+      renderQuestions();
+      updateProgress();
+    });
+  </script>
+</body>
+</html>
